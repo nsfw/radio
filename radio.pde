@@ -76,37 +76,39 @@ Station[] stations = {
     new Station(0.8, "radio3.mp3", 1.0)
 };
 
-int WIDTH=512;
-int HEIGHT=200;
-
 void setup()
 {
-  size(512, 200, P2D);
-  minim = new Minim(this);
-  
-  // load up our "stations" - and start playing them 
-  for(int i=0; i<stations.length; i++){
-      stations[i].open();
-      stations[i].volume(0.0);
-  }
-
+    size(512, 200, P2D);				// init display
+    minim = new Minim(this);			// ini audio library
+    
+    // load up our "stations" - and start playing them muted
+    for(int i=0; i<stations.length; i++){
+        stations[i].open();
+        stations[i].volume(0.0);
+    }
 }
 
 void dial(float freq){
-  // set volumes based on "tuner frequency" [0, 1]
+  // set volumes based on "tuner frequency" [0.0, 1.0]
   float maxTune=0.0;
   for(int i=1; i<stations.length; i++){
       maxTune = max(stations[i].tune(f),maxTune);
   }
 
-  // set the static level inversly
+  // set the static level inversely
   float sgain = pow((1.0-maxTune),4);
   if(sgain<minLinearVolume) sgain=0;	// at some point turn off the static
   stations[0].volume(sgain);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Graphics 
+///////////////////////////////////////////////////////////////////////////////
+
 float f=0.0;		// current frequency
 boolean mouseFlag=false;
+int WIDTH=512;
+int HEIGHT=200;
 
 void draw()
 {
