@@ -11,8 +11,16 @@
  */
 
 import ddf.minim.*;
-
 Minim minim;
+
+import processing.serial.*;
+import cc.arduino.*;
+Arduino arduino;
+
+// GLOBAL CONTROLS
+float f=0.0;			// current frequency [0..1]
+float voldial=0.0;		// "volume" dial [0..1]
+float vol=1.0;			// master volume 
 
 float minLinearVolume = 0.02;		// clamp less than this to zero
 float inband=0.1;					// +- this value
@@ -51,12 +59,11 @@ class Station {
         v = pow(v, 2);
         if(v<minLinearVolume) v=0.0;
 
-        volume(v);
+        volume(v*vol);		// include "master volume"
         return v;
     }
 
-    void volume(float vol){
-        v=vol;
+    void volume(float v){
         float db = 10*log10(v*lingain);
         audio.setGain(db);
         if(false){
@@ -76,10 +83,20 @@ Station[] stations = {
     new Station(0.8, "radio3.mp3", 1.0)
 };
 
+int dialPin=0;
+int volPin=1;
+int LEDPin=18;
+
 void setup()
 {
-    size(512, 200, P2D);				// init display
+    size(512, 200, P2D);				// init display for debug
     minim = new Minim(this);			// ini audio library
+
+    // talk to arduino in our "radio"
+    arduino = new Arduino(this, Arduino.list()[0],57600);
+    // make dial light flicker
+    arduino.pinMode(LEDPin, Arduino.OUTPUT);
+    arduino.digitalWrite(LEDPin, Arduino.HIGH);
     
     // load up our "stations" - and start playing them muted
     for(int i=0; i<stations.length; i++){
@@ -98,23 +115,42 @@ void dial(float freq){
   // set the static level inversely
   float sgain = pow((1.0-maxTune),4);
   if(sgain<minLinearVolume) sgain=0;	// at some point turn off the static
-  stations[0].volume(sgain);
+  stations[0].volume(sgain * vol);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Graphics 
 ///////////////////////////////////////////////////////////////////////////////
-
-float f=0.0;		// current frequency
-boolean mouseFlag=false;
 int WIDTH=512;
 int HEIGHT=200;
 
+
+boolean mouseFlag=false;
+boolean testing=false;
+float flicker=0.5;
+int flickerRate=0;
+
 void draw()
 {
-    
-    f= (f+0.001) % 1.0;
-    if(mouseFlag) f = (float) mouseX/(float) WIDTH;
+    if(testing){
+        f= (f+0.001) % 1.0;
+        if(mouseFlag) f = (float) mouseX/(float) WIDTH;
+    } else {
+        // read dials from radio
+        // Tuning dial goes from 0-685
+        f=constrain(arduino.analogRead(0)/685.0, 0.0, 1.0);
+        // ignore full 1023 value on "volume" knob
+        int t=arduino.analogRead(1);
+        if(t<=1020) voldial=0.1+constrain((1020-t)/1020.0, 0, 1.0);
+        vol=constrain(voldial, 0.1, 1.0);
+
+        // and "flicker the dial LED for effect"
+        if((flickerRate++%4)==0){
+            arduino.digitalWrite(LEDPin,
+                                 (noise(flickerRate) >=0.2)?Arduino.HIGH:Arduino.LOW);
+        }
+    }
+
     dial(f);
     
     // draw the volumes
