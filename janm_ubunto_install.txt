@@ -1,0 +1,21 @@
+Process for running "Radio" on Ubuntu 10.10
+
+1) Install processing
+2) Install nescessary optional Processing libraries
+ * Arduino - http://www.arduino.cc/playground/Interfacing/Processing
+   Copy to Processing's Sketchbook/libraries folder
+   On LINUX rename libraries/arduino/Arduino.jar to arduino.jar 
+
+3) Install LATEST Arduino package!
+   (shouldn't have to do this, but need to copy some libs)
+* You will need to enable the "backports repository" in order to get the most recent version.
+  Look for "maveric-backports" on Synaptic's Repository/Software Sources/Updates check box.
+
+ copy /usr/share/jave/RXTXcomm.jar -> processing-1.2.1/libraries/serial/libraryw
+ copy /usr/lib/jni/librxtxSerial.so -> processing-1.2.1/libraries/serial/libraryw
+
+4) it should work!
+
+
+Don't forget: if you change the applicaiton then you need to RE-EXPORT
+the radio.application
