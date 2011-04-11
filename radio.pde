@@ -64,20 +64,28 @@ class Station {
     }
 
     void volume(float v){
-        float db = 10*log10(v*lingain);
-        audio.setGain(db);
+	// work w/ Volume control or Master Gain control
+
+	float db = 10*log10(v*lingain);
+
+	if(audio.hasControl(Controller.GAIN)){
+	    // Master Gain
+	    audio.setGain(db);
+	} else {
+	    // On laptop Volume is both 0-0xffff and "feels log"
+	    audio.setVolume(constrain(0xffff+((db/12.0)*0xffff), 0, 0xffff));
+	}
+
         if(false){
-            print(fn);
-            print(" v: ");
-            print(v);
-            print(" gain: ");
-            println(db);
+	    print(db);
+	    print(" / ");
+	    println(audio.getVolume());
         }
     }
 }    
 
 Station[] stations = {
-    new Station(0.0, "static1.mp3", 0.7),
+    new Station(0.0, "static1.mp3", 0.9),
     new Station(0.1, "radio1.mp3", 1.0),
     new Station(0.5, "radio2.mp3", 1.0),
     new Station(0.8, "radio3.mp3", 1.0)
@@ -94,6 +102,7 @@ void setup()
 
     // talk to arduino in our "radio"
     arduino = new Arduino(this, Arduino.list()[0],57600);
+
     // make dial light flicker
     arduino.pinMode(LEDPin, Arduino.OUTPUT);
     arduino.digitalWrite(LEDPin, Arduino.HIGH);
@@ -102,6 +111,7 @@ void setup()
     for(int i=0; i<stations.length; i++){
         stations[i].open();
         stations[i].volume(0.0);
+	stations[i].audio.printControls();
     }
 }
 
@@ -138,11 +148,11 @@ void draw()
     } else {
         // read dials from radio
         // Tuning dial goes from 0-685
-        f=constrain(arduino.analogRead(0)/685.0, 0.0, 1.0);
-        // ignore full 1023 value on "volume" knob
-        int t=arduino.analogRead(1);
-        if(t<=1020) voldial=0.1+constrain((1020-t)/1020.0, 0, 1.0);
-        vol=constrain(voldial, 0.1, 1.0);
+        float nf=constrain(arduino.analogRead(0)/685.0, 0.0, 1.0);
+        f += ((nf-f) * 0.1);	// lowpass sensor
+
+        voldial=map(1023-arduino.analogRead(1), 0, 1020, 0.4, 1.0);
+        vol=constrain(voldial, 0.4, 1.0);
 
         // and "flicker the dial LED for effect"
         if((flickerRate++%4)==0){
