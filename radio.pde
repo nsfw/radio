@@ -85,10 +85,13 @@ class Station {
 }    
 
 Station[] stations = {
-    new Station(0.0, "static1.mp3", 0.9),
-    new Station(0.1, "radio1.mp3", 1.0),
-    new Station(0.5, "radio2.mp3", 1.0),
-    new Station(0.8, "radio3.mp3", 1.0)
+    new Station(0.0, "static1.mp3", 1.0),
+    new Station(0.1, "normalized1.mp3", 1.0),
+    new Station(0.5, "normalized2.mp3", 1.0),
+    new Station(0.8, "normalized3.mp3", 1.0)
+    // new Station(0.1, "radio1.mp3", 1.0),
+    // new Station(0.5, "radio2.mp3", 1.0),
+    // new Station(0.8, "radio3.mp3", 1.0)
 };
 
 int dialPin=0;
